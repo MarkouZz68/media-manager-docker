@@ -6,9 +6,14 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-const torrents = process.env.TORRENTS_PATH || "/data/torrents";
-const series   = process.env.SERIES_PATH   || "/data/series";
-const films    = process.env.FILMS_PATH    || "/data/films";
+const torrents = process.env.TORRENTS_PATH || "/data/Torrents";
+const series   = process.env.SERIES_PATH   || "/data/Media/Series";
+const films    = process.env.FILMS_PATH    || "/data/Media/Films_Test";
+
+// LOGS DE DÉBOGAGE au démarrage
+console.log("Chemins configurés :");
+console.log("- Torrents:", torrents, " Existe:", fs.existsSync(torrents));
+console.log("- Series:", series, " Existe:", fs.existsSync(series));
 
 // auto hide
 const autoHide = ["Media-Manager.lnk"];
