@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   media-manager:
-    build: . # Dockge cherchera le Dockerfile dans le même dossier
+    build: https://github.com/MarkouZz68/media-manager-docker.git
     container_name: media-manager
     ports:
       - "3000:3000"
