@@ -40,48 +40,66 @@ function saveHidden(list){
     fs.writeFileSync(hiddenFile, JSON.stringify(list, null, 2));
 }
 
-function getMainFile(dir) {
-    const files = fs.readdirSync(dir);
-    let biggestFile = null;
-    let maxWeight = 0;
+// Liste des extensions vidéo valides
+const videoExtensions = [".mkv", ".mp4", ".avi", ".mov", ".m4v"];
 
-    files.forEach(f => {
-        const fullPath = path.join(dir, f);
+function getFirstVideoRecursive(dir, baseDir = dir) {
+    const items = fs.readdirSync(dir);
+    
+    for (const item of items) {
+        const fullPath = path.join(dir, item);
         const stats = fs.statSync(fullPath);
+        const relativePath = path.relative(baseDir, fullPath);
 
-        if (stats.isFile()) {
-            // On vérifie si c'est une vidéo (mp4, mkv, avi...)
-            const ext = path.extname(f).toLowerCase();
-            const videoExts = [".mkv", ".mp4", ".avi", ".mov"];
-            
-            if (videoExts.includes(ext) && stats.size > maxWeight) {
-                maxWeight = stats.size;
-                biggestFile = f;
+        if (stats.isDirectory()) {
+            // On fouille dans le sous-dossier
+            const found = getFirstVideoRecursive(fullPath, baseDir);
+            if (found) return found;
+        } else {
+            const ext = path.extname(item).toLowerCase();
+            if (videoExtensions.includes(ext)) {
+                // On a trouvé une vidéo ! On renvoie son chemin relatif au dossier Torrents
+                return relativePath;
             }
-        } else if (stats.isDirectory()) {
-            // Optionnel : tu peux chercher dans les sous-dossiers ici si besoin
         }
-    });
-    return biggestFile;
+    }
+    return null;
 }
 
 function listFiles(dir) {
     let hidden = getHidden();
     if (!fs.existsSync(dir)) return [];
 
-    return fs.readdirSync(dir).filter(f => {
-        const full = path.join(dir, f);
-        if (hidden.includes(f) || autoHide.includes(f)) return false;
+    // On récupère tout le contenu du dossier Torrents
+    const rootItems = fs.readdirSync(dir);
 
-        const stats = fs.statSync(full);
-        
-        if (stats.isDirectory()) {
-            const video = getMainFile(full);
-            return video !== null; // On ne garde le dossier que s'il contient une vidéo
+    const results = [];
+
+    rootItems.forEach(item => {
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+
+        // Filtres d'exclusion (cachés, lnk, etc.)
+        if (hidden.includes(item) || autoHide.includes(item) || autoHideExt.includes(path.extname(item).toLowerCase())) {
+            return;
         }
-        
-        return stats.isFile();
+
+        if (stats.isFile()) {
+            // C'est un fichier à la racine, on l'ajoute si c'est une vidéo
+            if (videoExtensions.includes(path.extname(item).toLowerCase())) {
+                results.push(item);
+            }
+        } else if (stats.isDirectory()) {
+            // C'est un dossier, on cherche la vidéo à l'intérieur
+            const videoSubPath = getFirstVideoRecursive(fullPath, dir);
+            if (videoSubPath) {
+                // On ajoute le chemin relatif (ex: "Dossier_Twitch/video.mkv")
+                results.push(videoSubPath);
+            }
+        }
     });
+
+    return results;
 }
 
 // list folders
