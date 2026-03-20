@@ -40,28 +40,22 @@ function saveHidden(list){
     fs.writeFileSync(hiddenFile, JSON.stringify(list, null, 2));
 }
 
-// list files
 function listFiles(dir){
-
     let hidden = getHidden();
-
     if (!fs.existsSync(dir)) return [];
 
     return fs.readdirSync(dir).filter(f => {
-
-        const full = path.join(dir,f);
+        const full = path.join(dir, f);
         const ext = path.extname(f).toLowerCase();
 
-        if (!fs.statSync(full).isFile()) return false;
+        // On retire la condition isFile() pour voir aussi les dossiers
+        // if (!fs.statSync(full).isFile()) return false; 
 
         if (autoHide.includes(f)) return false;
-
         if (autoHideExt.includes(ext)) return false;
-
         if (hidden.includes(f)) return false;
 
         return true;
-
     });
 }
 
