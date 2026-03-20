@@ -15,7 +15,13 @@ const autoHide = ["Media-Manager.lnk"];
 const autoHideExt = [".lnk"];
 
 // hidden file
-const hiddenFile = "./hidden.json";
+const hiddenFile = "/app/config/hidden.json";
+
+// Ajoute cette sécurité pour créer le dossier s'il n'existe pas
+const configDir = path.dirname(hiddenFile);
+if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+}
 
 if (!fs.existsSync(hiddenFile)) {
     fs.writeFileSync(hiddenFile, JSON.stringify([]));
