@@ -6,9 +6,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Format : "/chemin/sur/ton/LXC:/chemin/dans/le/container"
       - /shared:/data
-      - ./config:/app/config # Pour garder tes fichiers cachés après un redémarrage
+      - ./config:/app/config
     environment:
       - TORRENTS_PATH=/data/Torrents
       - SERIES_PATH=/data/Media/Series
