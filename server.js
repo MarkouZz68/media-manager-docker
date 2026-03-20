@@ -40,22 +40,47 @@ function saveHidden(list){
     fs.writeFileSync(hiddenFile, JSON.stringify(list, null, 2));
 }
 
-function listFiles(dir){
+function getMainFile(dir) {
+    const files = fs.readdirSync(dir);
+    let biggestFile = null;
+    let maxWeight = 0;
+
+    files.forEach(f => {
+        const fullPath = path.join(dir, f);
+        const stats = fs.statSync(fullPath);
+
+        if (stats.isFile()) {
+            // On vérifie si c'est une vidéo (mp4, mkv, avi...)
+            const ext = path.extname(f).toLowerCase();
+            const videoExts = [".mkv", ".mp4", ".avi", ".mov"];
+            
+            if (videoExts.includes(ext) && stats.size > maxWeight) {
+                maxWeight = stats.size;
+                biggestFile = f;
+            }
+        } else if (stats.isDirectory()) {
+            // Optionnel : tu peux chercher dans les sous-dossiers ici si besoin
+        }
+    });
+    return biggestFile;
+}
+
+function listFiles(dir) {
     let hidden = getHidden();
     if (!fs.existsSync(dir)) return [];
 
     return fs.readdirSync(dir).filter(f => {
         const full = path.join(dir, f);
-        const ext = path.extname(f).toLowerCase();
+        if (hidden.includes(f) || autoHide.includes(f)) return false;
 
-        // On retire la condition isFile() pour voir aussi les dossiers
-        // if (!fs.statSync(full).isFile()) return false; 
-
-        if (autoHide.includes(f)) return false;
-        if (autoHideExt.includes(ext)) return false;
-        if (hidden.includes(f)) return false;
-
-        return true;
+        const stats = fs.statSync(full);
+        
+        if (stats.isDirectory()) {
+            const video = getMainFile(full);
+            return video !== null; // On ne garde le dossier que s'il contient une vidéo
+        }
+        
+        return stats.isFile();
     });
 }
 
