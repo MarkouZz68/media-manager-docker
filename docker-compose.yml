@@ -10,7 +10,7 @@ services:
       - /shared/Torrents:/data/torrents
       - /shared/Media/Series:/data/series
       - /shared/Media/Films_Test:/data/films
-      - ./config:/app/hidden.json # Pour garder tes fichiers cachés après un redémarrage
+      - ./config:/app/config # Pour garder tes fichiers cachés après un redémarrage
     environment:
       - TORRENTS_PATH=/data/torrents
       - SERIES_PATH=/data/series
