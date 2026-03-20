@@ -119,33 +119,43 @@ app.get("/files",(req,res)=>{
     });
 });
 
-// MOVE
-app.post("/move",(req,res)=>{
-    try{
-        const {file,type,destFolder} = req.body;
-
-        const src = path.join(torrents,file);
+app.post("/move", (req, res) => {
+    try {
+        const { file, type, destFolder } = req.body;
+        
+        // 'file' peut être "mon_film.mkv" ou "Dossier_Film/mon_film.mkv"
+        const fullSrcPath = path.join(torrents, file);
+        
+        // On détermine si le fichier est à la racine ou dans un sous-dossier
+        // On récupère le premier segment du chemin (le dossier racine du torrent)
+        const pathParts = file.split(path.sep);
+        const rootItem = pathParts[0]; 
+        
+        const srcToMove = path.join(torrents, rootItem);
         let dest;
 
-        if(type === "series"){
-            dest = path.join(series,destFolder,file);
-        }else{
-            dest = path.join(films,file);
+        if (type === "series") {
+            // Pour les séries, on déplace vers /Media/Series/NomDeLaSerie/NomDuDossierOuFichier
+            dest = path.join(series, destFolder, rootItem);
+        } else {
+            // Pour les films, on déplace vers /Media/Films_Test/NomDuDossierOuFichier
+            dest = path.join(films, rootItem);
         }
 
         const destDir = path.dirname(dest);
-
-        if(!fs.existsSync(destDir)){
-            fs.mkdirSync(destDir,{recursive:true});
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
         }
 
-        fs.renameSync(src,dest);
+        // Grâce au volume unique /data dans Dockge, renameSync fonctionne instantanément
+        fs.renameSync(srcToMove, dest);
 
-        res.json({ok:true});
+        console.log(`Déplacement réussi : ${srcToMove} -> ${dest}`);
+        res.json({ ok: true });
 
-    }catch(err){
-        console.error(err);
-        res.status(500).json({error:err.message});
+    } catch (err) {
+        console.error("Erreur lors du déplacement :", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
