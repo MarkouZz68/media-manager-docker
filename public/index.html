@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Media Manager</title>
+
+<style>
+body{
+font-family:Segoe UI;
+background:#1e1e1e;
+color:white;
+margin:30px;
+}
+
+table{width:100%;border-collapse:collapse;}
+th{background:#333;padding:10px;}
+td{padding:8px;border-bottom:1px solid #444;}
+
+button{
+padding:6px 10px;
+margin-right:5px;
+border:none;
+cursor:pointer;
+}
+
+.move{background:#4CAF50;color:white;}
+.delete{background:#e53935;color:white;}
+.clean{background:#ff9800;color:black;margin-bottom:15px;}
+
+select{padding:5px;width:100%;margin-top:5px;}
+</style>
+
+</head>
+
+<body>
+
+<h1>Media Manager</h1>
+
+<button class="clean" onclick="clean()">Suppression fichiers indésirables</button>
+
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Action</th>
+<th>Destination</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+</table>
+
+<script>
+
+let seriesList = []
+
+async function load(){
+
+let data = await fetch("/files").then(r=>r.json())
+let table = document.getElementById("table")
+
+table.innerHTML = ""
+seriesList = data.series
+
+data.torrents.forEach(file=>{
+
+let row = document.createElement("tr")
+
+row.innerHTML = `
+<td>${file}</td>
+
+<td>
+<button class="move" onclick="move('${file}')">Move</button>
+<button class="delete" onclick="del('${file}')">Delete</button>
+</td>
+
+<td>
+
+<select id="type_${file}" onchange="updateUI('${file}')">
+<option value="">Choose</option>
+<option value="series">Series</option>
+<option value="films">Films</option>
+</select>
+
+<select id="series_${file}" style="display:none;"></select>
+
+</td>
+`
+
+table.appendChild(row)
+
+})
+
+}
+
+function updateUI(file){
+
+let type = document.getElementById("type_"+file).value
+let select = document.getElementById("series_"+file)
+
+select.innerHTML=""
+
+if(type === "series"){
+
+select.style.display="block"
+
+seriesList.forEach(f=>{
+let o=document.createElement("option")
+o.value=f
+o.textContent=f
+select.appendChild(o)
+})
+
+}else{
+select.style.display="none"
+}
+
+}
+
+async function move(file){
+
+let type = document.getElementById("type_"+file).value
+
+if(!type){
+alert("Select type")
+return
+}
+
+let destFolder = ""
+
+if(type === "series"){
+destFolder = document.getElementById("series_"+file).value
+
+if(!destFolder){
+alert("Select series folder")
+return
+}
+}
+
+await fetch("/move",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({
+file,
+type,
+destFolder
+})
+})
+
+load()
+
+}
+
+async function del(file){
+
+await fetch("/delete",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({file})
+})
+
+load()
+
+}
+
+async function clean(){
+
+await fetch("/clean",{method:"POST"})
+load()
+
+}
+
+load()
+
+</script>
+
+</body>
+</html>

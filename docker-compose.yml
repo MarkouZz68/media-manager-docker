@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  media-manager:
+    build: . # Dockge cherchera le Dockerfile dans le même dossier
+    container_name: media-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      # Format : "/chemin/sur/ton/LXC:/chemin/dans/le/container"
+      - /shared/Torrents:/data/torrents
+      - /shared/Media/Series:/data/series
+      - /shared/Media/Films_Test:/data/films
+      - ./config:/app/hidden.json # Pour garder tes fichiers cachés après un redémarrage
+    environment:
+      - TORRENTS_PATH=/data/torrents
+      - SERIES_PATH=/data/series
+      - FILMS_PATH=/data/films
+    restart: unless-stopped
