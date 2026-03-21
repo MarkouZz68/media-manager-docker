@@ -28,7 +28,7 @@ Utilisez le `docker-compose.yaml` suivant :
 version: "3.8"
 services:
   media-manager:
-    build: [https://github.com/VOTRE_PSEUDO/NOM_DU_REPO.git](https://github.com/VOTRE_PSEUDO/NOM_DU_REPO.git)
+    build: https://github.com/MarkouZz68/media-manager-docker.git
     container_name: media-manager
     ports:
       - "3000:3000"
