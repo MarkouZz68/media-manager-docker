@@ -52,7 +52,7 @@
 <body>
 
 <div class="container">
-    <h1>🎬 Media Manager</h1>
+    <h1>🎬 Media Manager <button onclick="loadData()" style="background:none; font-size: 0.5em; vertical-align: middle;">🔄</button></h1>
 
     <div class="section">
         <h2>📥 Torrents à traiter</h2>
@@ -133,6 +133,8 @@
 
     // Lancer au démarrage
     loadData();
+    // Rafraîchir les données toutes les 30 secondes (30000 millisecondes)
+setInterval(loadData, 30000);
 </script>
 
 </body>
