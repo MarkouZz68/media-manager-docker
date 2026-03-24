@@ -126,6 +126,30 @@ if(!type){
 alert("Select type")
 return
 }
+// PARTIE À REMPLACER pour la génération de la liste
+    const torrentsList = document.getElementById("torrents-list");
+    torrentsList.innerHTML = "";
+    
+    data.torrents.forEach(file => {
+        const li = document.createElement("li");
+        
+        // Détection du type (Fichier ou Dossier)
+        // Si le nom contient un point (ex: .mkv), on considère que c'est un fichier
+        const isFile = file.includes('.'); 
+        
+        // Choix de l'icône Emoji
+        const icon = isFile ? "🎬" : "📂";
+        
+        li.innerHTML = `
+            <span class="file-name">${icon} ${file}</span>
+            <div class="actions">
+                </div>
+        `;
+        torrentsList.appendChild(li);
+    });
+
+    // ... (reste de la fonction inchangé) ...
+}
 
 let destFolder = ""
 
