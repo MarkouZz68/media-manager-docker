@@ -70,36 +70,15 @@ function listFiles(dir) {
     let hidden = getHidden();
     if (!fs.existsSync(dir)) return [];
 
-    // On récupère tout le contenu du dossier Torrents
-    const rootItems = fs.readdirSync(dir);
+    return fs.readdirSync(dir).filter(f => {
+        // On garde tout ce qui n'est pas caché
+        if (hidden.includes(f) || autoHide.includes(f)) return false;
+        
+        const ext = path.extname(f).toLowerCase();
+        if (autoHideExt.includes(ext)) return false;
 
-    const results = [];
-
-    rootItems.forEach(item => {
-        const fullPath = path.join(dir, item);
-        const stats = fs.statSync(fullPath);
-
-        // Filtres d'exclusion (cachés, lnk, etc.)
-        if (hidden.includes(item) || autoHide.includes(item) || autoHideExt.includes(path.extname(item).toLowerCase())) {
-            return;
-        }
-
-        if (stats.isFile()) {
-            // C'est un fichier à la racine, on l'ajoute si c'est une vidéo
-            if (videoExtensions.includes(path.extname(item).toLowerCase())) {
-                results.push(item);
-            }
-        } else if (stats.isDirectory()) {
-            // C'est un dossier, on cherche la vidéo à l'intérieur
-            const videoSubPath = getFirstVideoRecursive(fullPath, dir);
-            if (videoSubPath) {
-                // On ajoute le chemin relatif (ex: "Dossier_Twitch/video.mkv")
-                results.push(videoSubPath);
-            }
-        }
+        return true; 
     });
-
-    return results;
 }
 
 // list folders
@@ -160,17 +139,21 @@ app.post("/move", (req, res) => {
 });
 
 // DELETE
-app.post("/delete",(req,res)=>{
-    try{
-        const {file} = req.body;
+app.post("/delete", (req, res) => {
+    try {
+        const { file } = req.body;
+        const fullPath = path.join(torrents, file);
 
-        fs.unlinkSync(path.join(torrents,file));
+        // fs.rmSync est plus moderne et gère fichiers ET dossiers
+        if (fs.existsSync(fullPath)) {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            console.log(`Supprimé : ${fullPath}`);
+        }
 
-        res.json({ok:true});
-
-    }catch(err){
-        console.error(err);
-        res.status(500).json({error:err.message});
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("Erreur suppression :", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
