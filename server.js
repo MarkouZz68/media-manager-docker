@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 const torrents = process.env.TORRENTS_PATH || "/data/Torrents";
-const series   = process.env.SERIES_PATH   || "/data/Media/Series";
+const series   = process.env.SERIES_PATH   || "/data/Media/series_test";
 const films    = process.env.FILMS_PATH    || "/data/Media/Films_Test";
 
 // LOGS DE DÉBOGAGE au démarrage
@@ -153,6 +153,52 @@ app.post("/delete", (req, res) => {
         res.json({ ok: true });
     } catch (err) {
         console.error("Erreur suppression :", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+// Servir la page de renommage
+app.get("/rename-page", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "rename.html"));
+});
+
+// API pour lister les médias triés (Films et Séries)
+app.get("/api/media", (req, res) => {
+    const getFolders = (dir) => {
+        if (!fs.existsSync(dir)) return [];
+        // On liste tout, dossiers et fichiers
+        return fs.readdirSync(dir);
+    };
+
+    res.json({
+        films: getFolders(films),
+        series: getFolders(series)
+    });
+});
+
+// API pour exécuter le renommage
+app.post("/api/rename-action", (req, res) => {
+    try {
+        const { oldName, newName, type, parentFolder } = req.body;
+        let baseDir = type === 'films' ? films : series;
+        
+        // Si c'est une série, le fichier est dans un sous-dossier (le nom de la série)
+        let fullOldPath, fullNewPath;
+        if (type === 'series' && parentFolder) {
+            fullOldPath = path.join(baseDir, parentFolder, oldName);
+            fullNewPath = path.join(baseDir, parentFolder, newName);
+        } else {
+            fullOldPath = path.join(baseDir, oldName);
+            fullNewPath = path.join(baseDir, newName);
+        }
+
+        if (fs.existsSync(fullOldPath)) {
+            fs.renameSync(fullOldPath, fullNewPath);
+            console.log(`Renommé : ${oldName} -> ${newName}`);
+            res.json({ ok: true });
+        } else {
+            res.status(404).json({ error: "Fichier introuvable" });
+        }
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
