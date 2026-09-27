@@ -47,6 +47,11 @@
             background: #444; border: 1px solid #555; color: white;
             padding: 5px; border-radius: 4px; width: 120px;
         }
+        select {
+            background: #444; border: 1px solid #555; color: white;
+            padding: 5px; border-radius: 4px; max-width: 220px;
+        }
+        .new-folder { display: none; }
     </style>
 </head>
 <body>
@@ -68,7 +73,7 @@
     // Chargement initial
     async function loadData() {
         try {
-            const response = await fetch('/api/data');
+            const response = await fetch('/files');
             const data = await response.json();
             const list = document.getElementById("torrents-list");
             list.innerHTML = "";
@@ -85,18 +90,54 @@
                 const isFile = file.includes('.');
                 const icon = isFile ? "🎬" : "📂";
 
-                li.innerHTML = `
-                    <div class="file-info">
-                        <span>${icon}</span>
-                        <span>${file}</span>
-                    </div>
-                    <div class="actions">
-                        <input type="text" id="folder-${btoa(file)}" placeholder="Nom de la série...">
-                        <button class="btn-move-series" onclick="move('${file}', 'series')">Série</button>
-                        <button class="btn-move-films" onclick="move('${file}', 'films')">Film</button>
-                        <button class="btn-delete" onclick="remove('${file}')">🗑️</button>
-                    </div>
-                `;
+                const key = btoa(unescape(encodeURIComponent(file)));
+
+                const info = document.createElement("div");
+                info.className = "file-info";
+                const iconSpan = document.createElement("span");
+                iconSpan.textContent = icon;
+                const nameSpan = document.createElement("span");
+                nameSpan.textContent = file;
+                info.append(iconSpan, nameSpan);
+
+                const actions = document.createElement("div");
+                actions.className = "actions";
+
+                // Liste des dossiers de séries déjà existants + création d'un nouveau
+                const select = document.createElement("select");
+                select.id = `folder-${key}`;
+                select.innerHTML = `<option value="">— choisir un dossier de série —</option>`
+                    + data.series.map(s => `<option value="${s.replace(/"/g, "&quot;")}">${s}</option>`).join("")
+                    + `<option value="__new__">➕ Nouveau dossier…</option>`;
+
+                const newFolder = document.createElement("input");
+                newFolder.type = "text";
+                newFolder.id = `newfolder-${key}`;
+                newFolder.className = "new-folder";
+                newFolder.placeholder = "Nouveau dossier…";
+                select.addEventListener("change", () => {
+                    const creating = select.value === "__new__";
+                    newFolder.classList.toggle("new-folder", !creating);
+                    if (creating) newFolder.focus();
+                });
+
+                const btnSeries = document.createElement("button");
+                btnSeries.className = "btn-move-series";
+                btnSeries.textContent = "Série";
+                btnSeries.addEventListener("click", () => move(file, "series"));
+
+                const btnFilms = document.createElement("button");
+                btnFilms.className = "btn-move-films";
+                btnFilms.textContent = "Film";
+                btnFilms.addEventListener("click", () => move(file, "films"));
+
+                const btnDel = document.createElement("button");
+                btnDel.className = "btn-delete";
+                btnDel.textContent = "🗑️";
+                btnDel.addEventListener("click", () => remove(file));
+
+                actions.append(select, newFolder, btnSeries, btnFilms, btnDel);
+                li.append(info, actions);
                 list.appendChild(li);
             });
         } catch (err) {
@@ -104,10 +145,21 @@
         }
     }
 
+    function destFolderFor(file) {
+        const key = btoa(unescape(encodeURIComponent(file)));
+        const select = document.getElementById(`folder-${key}`);
+        if (!select) return "";
+        if (select.value === "__new__") {
+            const input = document.getElementById(`newfolder-${key}`);
+            return (input && input.value ? input.value : "").trim();
+        }
+        return select.value;
+    }
+
     async function move(file, type) {
-        const destFolder = document.getElementById(`folder-${btoa(file)}`).value;
+        const destFolder = destFolderFor(file);
         if (type === 'series' && !destFolder) {
-            alert("Veuillez entrer un nom de dossier pour la série.");
+            alert("Choisis un dossier de série dans la liste, ou crée-le avec « Nouveau dossier… ».");
             return;
         }
 
@@ -137,7 +189,12 @@
     // Lancer au démarrage
     loadData();
     // Rafraîchir les données toutes les 30 secondes (30000 millisecondes)
-setInterval(loadData, 30000);
+setInterval(() => {
+    const el = document.activeElement;
+    // ne pas reconstruire la liste pendant que l'utilisateur choisit un dossier
+    if (el && (el.tagName === 'SELECT' || el.tagName === 'INPUT')) return;
+    loadData();
+}, 30000);
 </script>
 
 </body>
