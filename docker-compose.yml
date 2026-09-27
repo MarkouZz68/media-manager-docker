@@ -10,6 +10,6 @@ services:
       - ./config:/app/config
     environment:
       - TORRENTS_PATH=/data/Torrents
-      - SERIES_PATH=/data/Media/a_Series
+      - SERIES_PATH=/data/Media/a_series
       - FILMS_PATH=/data/Media/Films_Test
     restart: unless-stopped
