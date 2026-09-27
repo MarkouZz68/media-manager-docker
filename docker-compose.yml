@@ -11,5 +11,5 @@ services:
     environment:
       - TORRENTS_PATH=/data/Torrents
       - SERIES_PATH=/data/Media/Series
-      - FILMS_PATH=/data/Media/Films_Test
+      - FILMS_PATH=/data/Media/Films
     restart: unless-stopped
