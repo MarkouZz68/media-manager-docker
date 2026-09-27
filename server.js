@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 const torrents = process.env.TORRENTS_PATH || "/data/Torrents";
-const series   = process.env.SERIES_PATH   || "/data/Media/series_test";
+const series   = process.env.SERIES_PATH   || "/data/Media/a_series";
 const films    = process.env.FILMS_PATH    || "/data/Media/Films_Test";
 
 // LOGS DE DÉBOGAGE au démarrage
